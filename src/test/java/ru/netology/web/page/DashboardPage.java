@@ -2,7 +2,9 @@ package ru.netology.web.page;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+
 import static com.codeborne.selenide.Selenide.*;
+
 import com.codeborne.selenide.Condition;
 
 public class DashboardPage {
@@ -14,14 +16,14 @@ public class DashboardPage {
         $("h2.heading").shouldHave(Condition.text("Личный кабинет"));
     }
 
-    public int getCardBalance(String cardLastDigits) {
-        SelenideElement card = cards.findBy(Condition.text(cardLastDigits));
+    public int getCardBalance(String maskedCardNumber) {
+        SelenideElement card = cards.findBy(Condition.text(maskedCardNumber));
         String text = card.text();
         return extractBalance(text);
     }
 
-    public TransferPage selectCardToTransfer(String cardLastDigits) {
-        SelenideElement card = cards.findBy(Condition.text(cardLastDigits));
+    public TransferPage selectCardToTransfer(String maskedCardNumber) {
+        SelenideElement card = cards.findBy(Condition.text(maskedCardNumber));
         card.$("button").click();
         return new TransferPage();
     }

@@ -2,6 +2,12 @@ package ru.netology.web.data;
 
 import lombok.Value;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 public class DataHelper {
     private DataHelper() {
     }
@@ -20,6 +26,10 @@ public class DataHelper {
 
     public static CardInfo getSecondCard() {
         return new CardInfo("5559 0000 0000 0002", 1);
+    }
+
+    public static String getCardLastDigits(String fullCardNumber) {
+        return fullCardNumber.substring(fullCardNumber.length() - 4);
     }
 
     @Value

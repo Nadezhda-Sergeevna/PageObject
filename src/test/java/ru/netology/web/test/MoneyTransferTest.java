@@ -2,37 +2,52 @@ package ru.netology.web.test;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.netology. web.data.DataHelper;
+import ru.netology.web.data.DataHelper;
 import ru.netology.web.page.*;
 
 import static com.codeborne.selenide.Selenide.open;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MoneyTransferTest {
+    private DashboardPage dashboardPage;
+    private DataHelper.CardInfo firstCard;
+    private DataHelper.CardInfo secondCard;
 
     @BeforeEach
     void setup() {
         open("http://localhost:9999");
+        var authInfo = DataHelper.getAuthInfo();
+        firstCard = DataHelper.getFirstCard();
+        secondCard = DataHelper.getSecondCard();
+        var loginPage = new LoginPage();
+        var verificationPage = loginPage.validLogin(authInfo.getLogin(), authInfo.getPassword());
+        dashboardPage = verificationPage.validVerify(DataHelper.getVerificationCode());
     }
 
     @Test
     void shouldTransferMoneyFromSecondToFirstCard() {
-        var authInfo = DataHelper.getAuthInfo();
-        var firstCard = DataHelper.getFirstCard();
-        var secondCard = DataHelper.getSecondCard();
+        var firstId = DataHelper.getCardLastDigits(firstCard.getNumber());
+        var secondId = DataHelper.getCardLastDigits(secondCard.getNumber());
 
-        var loginPage = new LoginPage();
-        var verificationPage = loginPage.validLogin(authInfo.getLogin(), authInfo.getPassword());
-        var dashboardPage = verificationPage.validVerify(DataHelper.getVerificationCode());
+        int amount = dashboardPage.getCardBalance(secondId) / 2;
+        int firstBefore = dashboardPage.getCardBalance(firstId);
+        int secondBefore = dashboardPage.getCardBalance(secondId);
 
-        int amount = 1000;
-        int firstBalanceBefore = dashboardPage.getCardBalance("0001");
-        int secondBalanceBefore = dashboardPage.getCardBalance("0002");
+        dashboardPage = dashboardPage
+                .selectCardToTransfer(firstId)
+                .transferValid(secondCard.getNumber(), amount);
 
-        var transferPage = dashboardPage.selectCardToTransfer("0001");
-        dashboardPage = transferPage.transfer(secondCard.getNumber(), amount);
+        assertEquals(firstBefore + amount, dashboardPage.getCardBalance(firstId));
+        assertEquals(secondBefore - amount, dashboardPage.getCardBalance(secondId));
+    }
 
-        assertEquals(firstBalanceBefore + amount, dashboardPage.getCardBalance("0001"));
-        assertEquals(secondBalanceBefore - amount, dashboardPage.getCardBalance("0002"));
+    @Test
+    void shouldShowErrorIfInsufficientFunds() {
+        var firstId = DataHelper.getCardLastDigits(firstCard.getNumber());
+        int invalidAmount = dashboardPage.getCardBalance(DataHelper.getCardLastDigits(secondCard.getNumber())) + 1;
+
+        dashboardPage.selectCardToTransfer(firstId)
+                .transferInvalid(secondCard.getNumber(), invalidAmount)
+                .shouldShowError("Ошибка");
     }
 }
